@@ -1,0 +1,8 @@
+begin
+int tom, dick, harry,tony ; bool passes,wrong; passes:=true; wrong:=false;
+tom := 5;
+dick:=tom*15; tony := tom*8;
+harry := tom*4-tom*3;
+passes:=dick-tony-harry=0;
+if dick < harry then passes := wrong else wrong := passes
+end

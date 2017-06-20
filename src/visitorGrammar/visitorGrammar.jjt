@@ -1,0 +1,213 @@
+options {
+  MULTI = true;
+  VISITOR = true;
+  NODE_DEFAULT_VOID = true;
+}
+
+PARSER_BEGIN(visitorGrammar)
+package visitorGrammar;
+
+public class visitorGrammar {
+
+  public static void main(String args[]) throws ParseException {
+    visitorGrammar parser = new visitorGrammar(System.in);
+
+    try{
+      ASTS tree = parser.S();
+      visitorGrammarVisitor v = new Visitor();
+      tree.jjtAccept(v,null);
+      System.out.println("Parsed Successfully");
+      }
+    catch(Exception e){
+      System.out.println("ERROR");
+      System.out.println(e.getMessage());
+      e.printStackTrace();
+      }
+  }
+}
+
+PARSER_END(visitorGrammar)
+
+SKIP :
+{  " " |
+   "\t" |
+   "\n" |
+   "\r"
+}
+
+TOKEN :
+{
+  < BEGIN : "begin" > |
+  < END : "end" > |
+  < INT : "int" > |
+  < SEMIC : ";" > |
+  < BOOL : "bool" > |
+  < COMMA : "," > |
+  < ASSIGN : ":=" > |
+  < PLUS : "+" > |
+  < MINUS : "-" > |
+  < MULT : "*" > |
+  < NUM : (< DIGIT >)+ > |
+  < DIGIT : ["0" -"9"] > |
+  < IF : "if" > |
+  < THEN : "then" > |
+  < ELSE : "else" > |
+  < EQUAL : "=" > |
+  < GTHAN : ">" > |
+  < LTHAN : "<" > |
+  < TRUE : "true" > |
+  < FALSE : "false" > |
+  < ID : (< ALPHA >)+ > |
+  < ALPHA : ["a"-"z"] >
+}
+
+/** Root production. */
+ASTS S() #S:
+{Token t;}
+{
+  < BEGIN > DECLS() LINES() < END >
+  {return jjtThis;}
+}
+
+void DECLS() :
+{}
+{
+  DECL() DECLS2()
+}
+
+void DECLS2() :
+{}
+{
+  (DECL())?
+}
+
+void DECL() #DECL:
+{}
+{
+   X() VARS() < SEMIC >
+}
+
+void X() #X:
+{}
+{
+  < INT >
+  | < BOOL >
+}
+
+void VARS() #VARS :
+{Token t;}
+{
+  t = < ID > {jjtThis.value = t.image;} VARS2()
+}
+
+void VARS2() #VARS2 :
+{}
+{
+  (< COMMA > VARS())?
+}
+
+
+void LINES() :
+{}
+{
+  STMT() LINES2()
+}
+
+void LINES2() #LINES2 :
+{Token t;}
+{
+  (t = < SEMIC > {jjtThis.value = t.image;} LINES())?
+}
+
+void STMT() :
+{}
+{
+  ASSN()
+  | IFSTMT()
+}
+
+void ASSN() #ASSN :
+{Token t;}
+{
+  t = < ID > {jjtThis.value = t.image;} < ASSIGN > Y()
+}
+
+void Y() #Y :
+{Token t;}
+{
+  EXPR() Y2()
+  | t = <TRUE> {jjtThis.value = t.image;}
+  | t = <FALSE> {jjtThis.value = t.image;}
+}
+
+void Y2() :
+{}
+{
+  (Q() EXPR())?
+}
+
+void EXPR() :
+{}
+{
+  TERM() EXPR2()
+}
+
+void EXPR2() :
+{}
+{
+  (Z() TERM() EXPR2())?
+}
+
+void Z() #Z:
+{Token t;}
+{
+  t = <PLUS> {jjtThis.value = t.image;}
+  | t = <MINUS> {jjtThis.value = t.image;}
+}
+
+void TERM() :
+{}
+{
+  FACTOR() TERM2()
+}
+
+void TERM2() #TERM2 :
+{Token t;}
+{
+  (t = <MULT> {jjtThis.value = t.image;} FACTOR() TERM2())?
+}
+
+void FACTOR() #FACTOR :
+{Token t;}
+{
+  t = <ID> {jjtThis.value = t.image;}
+  | t =  <NUM> {jjtThis.value = t.image;}
+}
+
+void IFSTMT() #IFSTMT :
+{}
+{
+  <IF> TEST() <THEN> ASSN() <ELSE> ASSN()
+}
+
+void TEST() #TEST:
+{Token t;}
+{
+  EXPR() TEST2()
+  | t = < TRUE > {jjtThis.value = t.image;}
+  | t = < FALSE > {jjtThis.value = t.image;}
+}
+
+void TEST2() :
+{}
+{
+  Q() EXPR()
+}
+
+void Q() #Q :
+{Token t;}
+{
+  t = <EQUAL> {jjtThis.value = t.image;}
+  | t = <GTHAN> {jjtThis.value = t.image;}
+  | t = <LTHAN> {jjtThis.value = t.image;}
+}
